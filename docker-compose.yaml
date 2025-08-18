@@ -1,0 +1,111 @@
+version: '3.9'
+services:
+  wb_service:
+    build: .
+    image: wb_service:latest
+    cpus: 4.0
+    mem_limit: 4g
+    volumes:
+      - ./logs/:/logs/
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+        # condition: service_healthy
+      - postgres
+    healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:8080/ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    expose:
+      - "8080"
+    networks:
+      - internal
+
+  postgres:
+    container_name: 'postgres'
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_HOST:      "${POSTGRES_HOST}"
+      POSTGRES_DB:        "${POSTGRES_DB}"
+      POSTGRES_USER:      "${POSTGRES_USER}"
+      POSTGRES_PASSWORD:  "${POSTGRES_PASSWORD}"
+      POSTGRES_PORT:      "${POSTGRES_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.1
+  #   container_name: zookeeper
+  #   restart: always
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   networks:
+  #     - internal
+
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.1
+  #   container_name: kafka
+  #   restart: always
+  #   depends_on:
+  #     - zookeeper
+  #   environment:
+  #     KAFKA_BROKER_ID:                         1
+  #     KAFKA_ZOOKEEPER_CONNECT:                zookeeper:2181
+  #     KAFKA_LISTENERS:                        PLAINTEXT://0.0.0.0:9092
+  #     KAFKA_ADVERTISED_LISTENERS:             PLAINTEXT://kafka:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   healthcheck:
+  #     test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+  #     interval: 5s
+  #     retries: 10
+  #   networks:
+  #     - internal
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   restart: always
+  #   volumes:
+  #     - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./config/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - internal
+  #   depends_on:
+  #     - main_service
+  #     - rating_service
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - internal
+  #   volumes:
+  #     - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+  #     - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+
+
+volumes:
+  postgres_data:
+  # grafana_data:
+
+networks:
+  internal:
+    driver: bridge

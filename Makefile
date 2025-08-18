@@ -5,9 +5,7 @@ export
 
 run-app:
 	@echo "Запуск приложения локально"
-	go build -o bin/main_service ./cmd/app/main.go
-	
-	CONFIG_PATH=./config/config.local.yaml ./bin/main_service
+	go build -o bin/wb_service ./cmd/app/main.go
 
 # Запуск PostgreSQL в Docker с параметрами из .env
 db-up:

@@ -1,4 +1,4 @@
-package config
+package logger
 
 import (
 	"fmt"
@@ -9,9 +9,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const logPath = "./logs/go.log"
-
-func NewLogger(env string) *zap.Logger {
+func NewLogger(env string, logPath string) *zap.Logger {
 	var cfg zap.Config
 
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o755); err != nil {
@@ -37,8 +35,8 @@ func NewLogger(env string) *zap.Logger {
 	cfg.Encoding = "json"
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	//cfg.OutputPaths = []string{"stdout", logPath}
-	cfg.OutputPaths = []string{logPath}
+	cfg.OutputPaths = []string{"stdout", logPath}
+	//cfg.OutputPaths = []string{logPath}
 
 	logger, err := cfg.Build()
 	if err != nil {

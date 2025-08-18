@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Env             string        `env:"ENV" envDefault:"dev"`
+	LogsPath        string        `env:"LOGS_PATH"`
 	Version         string        `env:"VERSION"`
 	HTTPPort        string        `env:"HTTP_PORT" envDefault:":8080"`
 	HTTPTimeout     time.Duration `env:"HTTP_TIMEOUT" envDefault:"4s"`
@@ -16,11 +17,11 @@ type Config struct {
 
 	PostgresURL     string `env:"POSTGRES_URL"`
 	PostgresHost    string `env:"POSTGRES_HOST"`
-	PostgresPort    int    `env:"POSTGRES_PORT"`
+	PostgresPort    uint16 `env:"POSTGRES_PORT"`
 	PostgresUser    string `env:"POSTGRES_USER"`
 	PostgresPass    string `env:"POSTGRES_PASSWORD"`
 	PostgresDB      string `env:"POSTGRES_DB"`
-	PostgresPoolMax int    `env:"POSTGRES_pool_max" envDefault:"5"`
+	PostgresPoolMax int    `env:"POSTGRES_POOL_MAX" envDefault:"5"`
 
 	// Kafka
 	// KafkaBrokers []string      `env:"KAFKA_BROKERS" envSeparator:","`
@@ -29,7 +30,13 @@ type Config struct {
 }
 
 func MustLoad() *Config {
-	var cfg *Config
+	var cfg *Config = &Config{}
+
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
+
 	if err := env.Parse(cfg); err != nil {
 		log.Fatalf("Cant load configuration: %v", err)
 	}
