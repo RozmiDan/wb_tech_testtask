@@ -1,20 +1,13 @@
 package mainhandler
 
-// ListGamesResponse — обёртка для GET /games
-type ListGamesResponse struct {
-	Data []entity.GameInList `json:"data"`
-	Meta *Pagination         `json:"meta,omitempty"`
+import "github.com/RozmiDan/wb_tech_testtask/internal/entity"
+
+type GetOrderResponse struct {
+	Order entity.OrderResponse
 }
 
-// --------------- ответы с ошибкой ---------------
-
-// APIError — структура описания ошибки
+// APIError — единая структура описания ошибки
 type APIError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-// ErrorResponse — обёртка для не-200 ответов
-type ErrorResponse struct {
-	Error APIError `json:"error"`
+	Code    string `json:"code"`    // машинно-читаемый код ошибки
+	Message string `json:"message"` // человеко-читаемое сообщение
 }

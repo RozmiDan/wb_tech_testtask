@@ -1,7 +1,12 @@
 package app
 
 import (
+	"context"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/RozmiDan/wb_tech_testtask/db"
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
@@ -38,7 +43,7 @@ func Run(cfg *config.Config) {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		logger.Info("starting server", zap.String("port", cfg.HttpInfo.Port))
+		logger.Info("starting server", zap.String("port", cfg.HTTPPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server error", zap.Error(err))
 			os.Exit(1)
@@ -51,7 +56,6 @@ func Run(cfg *config.Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Завершаем работу сервера
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("Server shutdown error", zap.Error(err))
 	} else {
