@@ -14,7 +14,7 @@ import (
 )
 
 type UseCase interface {
-	GetOrderInfo(ctx context.Context, orderUID string) (entity.OrderResponse, error)
+	GetOrderInfo(ctx context.Context, orderUID string) (*entity.OrderResponse, error)
 }
 
 func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server {

@@ -2,29 +2,29 @@ package mainhandler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/v5/render"
 	"go.uber.org/zap"
 )
 
 // 1) GET order/<order_uid>
 
 type OrderInfoGetter interface {
-	GetOrderInfo(ctx context.Context, orderUID string) (entity.OrderResponse, error)
+	GetOrderInfo(ctx context.Context, orderUID string) (*entity.OrderResponse, error)
 }
 
 func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
+	baselog := log.With(zap.String("handler", "MainHandler"))
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1) забираем request_id
 		ctx := r.Context()
-
-		logger := log.With(zap.String("handler", "MainHandler"))
-
+		logger := baselog
 		// 2) оборачиваем логгер
 		if reqID, ok := ctx.Value(entity.RequestIDKey{}).(string); ok && reqID != "" {
 			logger = logger.With(zap.String("request_id", reqID))
@@ -32,10 +32,12 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 
 		// 3) достаем UID из URL
 		orderUID := chi.URLParam(r, "order_uid")
-		if ok := uidParser(orderUID); !ok {
+		if err := uidParser(orderUID); err != nil {
 			logger.Warn("invalid order_uid", zap.String("order_uid", orderUID))
-			render.Status(r, http.StatusBadRequest)
-			render.JSON(w, r, APIError{"invalid_order_uid", "order_id is not a valid UID"})
+			errDTO := APIError{
+				Message: err.Error(),
+			}
+			http.Error(w, errDTO.Message, http.StatusBadRequest)
 			return
 		}
 
@@ -45,8 +47,10 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 			switch {
 			case errors.Is(ctx.Err(), context.DeadlineExceeded):
 				logger.Error("timeout exceeded", zap.Error(err))
-				render.Status(r, http.StatusGatewayTimeout)
-				render.JSON(w, r, APIError{"timeout_exceeded", "request took longer than timelimit"})
+				errDTO := APIError{
+					Message: "request took longer than the timelimit",
+				}
+				http.Error(w, errDTO.Message, http.StatusGatewayTimeout)
 				return
 
 				// case errors.Is(err, entity.ErrOrderNotFound):
@@ -56,63 +60,41 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 				// 	return
 			}
 			logger.Error("failed to get order", zap.Error(err))
-			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, APIError{"internal error", "could not find order"})
+			errDTO := APIError{
+				Message: "unexpected internal error",
+			}
+			http.Error(w, errDTO.Message, http.StatusInternalServerError)
 			return
 		}
 
 		// 5) формируем успешный ответ
 		resp := GetOrderResponse{
-			Order: order,
+			Order: *order,
 		}
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, resp)
+		b, err := json.MarshalIndent(resp, "", "	")
+		if err != nil {
+			logger.Error("error marshal response")
+		}
+		
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(b); err != nil {
+			logger.Error("error sending the response")
+			return 
+		}
 	}
 }
 
-func uidParser(uid string) bool {
+func uidParser(uid string) error {
 	if len(uid) != 0 && uid == strings.ToLower(uid) {
-		return true
+		return nil
 	}
-	return false
+	return errors.New("order_uid is not a valid UID")
 }
 
-// if err := uc.PostRating(ctx, gameID, payload.UserID, payload.Rating); err != nil {
-// 			switch {
-// 			case errors.Is(err, entity.ErrBrokerUnavailable):
-// 				logger.Error("broker unavailable", zap.Error(err))
-// 				render.Status(r, http.StatusServiceUnavailable)
-// 				render.JSON(w, r, ErrorResponse{
-// 					Error: APIError{"service_unavailable", "unable to publish rating"},
-// 				})
-// 				return
-
-// 			case errors.Is(err, entity.ErrGameNotFound):
-// 				logger.Info("game not found", zap.String("game_id", gameID))
-// 				render.Status(r, http.StatusNotFound)
-// 				render.JSON(w, r, ErrorResponse{
-// 					Error: APIError{"not_found", "game not found"},
-// 				})
-// 				return
-
-// 			case errors.Is(err, context.DeadlineExceeded):
-// 				logger.Error("timeout exceeded", zap.Error(err))
-// 				render.Status(r, http.StatusGatewayTimeout)
-// 				render.JSON(w, r, ErrorResponse{
-// 					Error: APIError{"timeout_exceeded", "request took longer than 2 seconds"},
-// 				})
-// 				return
-// 			}
-
-// 			logger.Error("failed to post rating", zap.Error(err))
-// 			render.Status(r, http.StatusInternalServerError)
-// 			render.JSON(w, r, ErrorResponse{
-// 				Error: APIError{"internal error", "could not submit rating"},
-// 			})
-// 			return
-// 		}
-
-// 		// 7) Успех — пустой ответ 200 OK
-// 		render.Status(r, http.StatusOK)
-// 		render.JSON(w, r, struct{}{})
-// 	}
+// func writeJSON(w http.ResponseWriter, code int, v any) {
+// 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+// 	w.WriteHeader(code)
+// 	enc := json.NewEncoder(w)
+// 	enc.SetEscapeHTML(true)
+// 	_ = enc.Encode(v)
+// }

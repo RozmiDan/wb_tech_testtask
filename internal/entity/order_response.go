@@ -29,17 +29,17 @@ type DeliveryPublic struct {
 }
 
 type PaymentPublic struct {
-	Amount       int    `json:"amount"`
+	Amount       int64  `json:"amount"`
 	Currency     string `json:"currency"`
-	DeliveryCost int    `json:"delivery_cost"`
-	GoodsTotal   int    `json:"goods_total"`
+	DeliveryCost int64  `json:"delivery_cost"`
+	GoodsTotal   int64  `json:"goods_total"`
 }
 
 type ItemPublic struct {
 	Name       string `json:"name"`
 	Brand      string `json:"brand"`
 	Size       string `json:"size"`
-	Price      int    `json:"price"`
-	TotalPrice int    `json:"total_price"`
-	Status     int    `json:"status"`
+	Price      int64  `json:"price"`
+	TotalPrice int64  `json:"total_price"`
+	Status     int64  `json:"status"`
 }
