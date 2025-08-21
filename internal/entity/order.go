@@ -1,6 +1,20 @@
 package entity
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	// репо
+	ErrorDBConnect   = errors.New("cant connect to DB")
+	ErrorInsertDB    = errors.New("insert failed")
+	ErrorOrderExists = errors.New("order with such UID already exists")
+	// для контроллера
+	ErrInvalidInput  = errors.New("invalid input")
+	ErrInternal      = errors.New("internal error")
+	ErrAlreadyExists = errors.New("already exists")
+)
 
 type OrderInfo struct {
 	OrderUID          string       `json:"order_uid"`
