@@ -11,9 +11,11 @@ var (
 	ErrorInsertDB    = errors.New("insert failed")
 	ErrorOrderExists = errors.New("order with such UID already exists")
 	// для контроллера
-	ErrInvalidInput  = errors.New("invalid input")
-	ErrInternal      = errors.New("internal error")
-	ErrAlreadyExists = errors.New("already exists")
+	ErrInvalidInput    = errors.New("invalid input")
+	ErrInternal        = errors.New("internal error")
+	ErrAlreadyExists   = errors.New("already exists")
+	ErrorOrderNotFound = errors.New("order not found")
+	ErrorQueryFailed   = errors.New("request failed")
 )
 
 type OrderInfo struct {

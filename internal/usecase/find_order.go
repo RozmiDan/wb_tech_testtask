@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"go.uber.org/zap"
@@ -17,15 +18,36 @@ func (u *UsecaseLayer) GetOrderInfo(ctx context.Context, orderUID string) (*enti
 		logger = logger.With(zap.String("request_id", reqID))
 	}
 
-	order, err := u.db.GetOrderByUID(ctx, orderUID)
-	if err != nil {
-		// TODO
+	if orderUID == "" {
+		logger.Warn("empty order_uid")
+		return nil, entity.ErrInvalidInput
 	}
 
-	logger.Info("successfuly found order")
+	order, err := u.db.GetOrderByUID(ctx, orderUID)
+	if err != nil {
+		switch {
+		case errors.Is(err, entity.ErrorOrderNotFound):
+			logger.Info("order not found")
+			return nil, entity.ErrorOrderNotFound // контроллер вернёт 404
+		case errors.Is(err, entity.ErrorQueryFailed):
+			// если контекст уже отменён/истёк — вернём 504 на уровне контроллера
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+				logger.Error("query failed due to ctx deadline/cancel", zap.Error(ctx.Err()))
+				return nil, entity.ErrInternal
+			}
+			logger.Error("query failed", zap.Error(err))
+			return nil, entity.ErrInternal // 500
+		default:
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(ctx.Err(), context.Canceled) {
+				logger.Error("unexpected repo error with ctx cancel/deadline", zap.Error(err), zap.Error(ctx.Err()))
+				return nil, entity.ErrInternal
+			}
+			logger.Error("unexpected repo error", zap.Error(err))
+			return nil, entity.ErrInternal
+		}
+	}
 
 	resOrd := mapOrderToResponse(order)
-
 	logger.Info("succsessfuly found order")
 	return resOrd, nil
 }

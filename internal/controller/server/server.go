@@ -6,6 +6,7 @@ import (
 
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/mainhandler"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/pinghandler"
 	custommiddleware "github.com/RozmiDan/wb_tech_testtask/internal/controller/middleware"
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"github.com/go-chi/chi/v5"
@@ -15,6 +16,7 @@ import (
 
 type UseCase interface {
 	GetOrderInfo(ctx context.Context, orderUID string) (*entity.OrderResponse, error)
+	AddOrderInfo(ctx context.Context, order *entity.OrderInfo) error
 }
 
 func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server {
@@ -33,6 +35,7 @@ func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server
 
 	// GET http://localhost:8081/order/<order_uid>
 	router.Get("/order/{order_uid}", mainhandler.New(baseLog, uc))
+	router.Post("/order/{order_uid}", pinghandler.New(baseLog, uc))
 
 	server := &http.Server{
 		Addr:         cfg.HTTPPort,

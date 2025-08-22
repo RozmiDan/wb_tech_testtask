@@ -20,12 +20,12 @@ type LogisticsInfo struct {
 }
 
 type DeliveryPublic struct {
-	Name    string `json:"name_masked"`
+	Name    string `json:"name"`
 	City    string `json:"city"`
 	Region  string `json:"region"`
-	Address string `json:"address_masked"`
-	Email   string `json:"email_masked"`
-	Phone   string `json:"phone_masked"`
+	Address string `json:"address"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
 }
 
 type PaymentPublic struct {

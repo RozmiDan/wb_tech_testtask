@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS items (
   total_price  INTEGER NOT NULL,
   nm_id        BIGINT NOT NULL,
   brand        TEXT NOT NULL,
-  status       INTEGER NOT NULL,
+  status       INTEGER NOT NULL
 );
 
 -- +goose Down

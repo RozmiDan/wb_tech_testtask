@@ -68,18 +68,15 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 		}
 
 		// 5) формируем успешный ответ
-		resp := GetOrderResponse{
-			Order: *order,
-		}
-		b, err := json.MarshalIndent(resp, "", "	")
+		b, err := json.MarshalIndent(order, "", "	")
 		if err != nil {
 			logger.Error("error marshal response")
 		}
-		
+
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(b); err != nil {
 			logger.Error("error sending the response")
-			return 
+			return
 		}
 	}
 }

@@ -1,6 +1,3 @@
--- +goose Down
-DROP TABLE IF EXISTS games;
-
 -- +goose Up
 CREATE TABLE IF NOT EXISTS orders (
   order_uid          TEXT PRIMARY KEY,
