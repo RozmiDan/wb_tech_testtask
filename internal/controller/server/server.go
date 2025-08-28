@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/drophandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/mainhandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/pinghandler"
 	custommiddleware "github.com/RozmiDan/wb_tech_testtask/internal/controller/middleware"
@@ -35,6 +36,7 @@ func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server
 
 	// GET http://localhost:8081/order/<order_uid>
 	router.Get("/order/{order_uid}", mainhandler.New(baseLog, uc))
+	router.Get("/service/drop", drophandler.New(baseLog))
 	router.Post("/order/{order_uid}", pinghandler.New(baseLog, uc))
 
 	server := &http.Server{

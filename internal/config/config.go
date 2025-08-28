@@ -23,6 +23,7 @@ type Config struct {
 	PostgresDB      string `env:"POSTGRES_DB"`
 	PostgresPoolMax int    `env:"POSTGRES_POOL_MAX" envDefault:"5"`
 
+	CacheCap int `env:"CACHE_CAPACITY" envDefault:"10"`
 	// Kafka
 	// KafkaBrokers []string      `env:"KAFKA_BROKERS" envSeparator:","`
 	// KafkaTopic   string        `env:"KAFKA_TOPIC"`

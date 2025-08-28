@@ -9,45 +9,40 @@ import (
 	"go.uber.org/zap"
 )
 
-const selectOrderQuery = ` 
+const selectLatestOrders = `
 	SELECT
 		o.order_uid, o.track_number, o.entry, o.locale, o.internal_signature,
 		o.customer_id, o.delivery_service, o.shardkey, o.sm_id, o.date_created, o.oof_shard,
-
 		d.name, d.phone, d.zip, d.city, d.address, d.region, d.email,
-
 		p.transaction, p.request_id, p.currency, p.provider, p.amount,
 		p.payment_dt, p.bank, p.delivery_cost, p.goods_total, p.custom_fee,
-
-		i.chrt_id, i.track_number, i.price, i.rid, i.name AS item_name,
+		i.chrt_id, i.track_number AS item_track, i.price, i.rid, i.name AS item_name,
 		i.sale, i.size, i.total_price, i.nm_id, i.brand, i.status
 	FROM orders o
 	LEFT JOIN deliveries d ON d.order_uid = o.order_uid
 	LEFT JOIN payments   p ON p.order_uid = o.order_uid
 	LEFT JOIN items      i ON i.order_uid = o.order_uid
-	WHERE o.order_uid = $1
-	ORDER BY i.chrt_id; 
+	ORDER BY o.created_at DESC
+	LIMIT $1;
 `
 
-func (rr *RatingRepository) GetOrderByUID(ctx context.Context, orderUID string) (*entity.OrderInfo, error) {
+func (rr *RatingRepository) GetLatestOrders(ctx context.Context, limit int) ([]*entity.OrderInfo, error) {
 	reqID, _ := ctx.Value(entity.RequestIDKey{}).(string)
 
-	logger := rr.log.With(zap.String("func", "GetOrderByUID"))
+	logger := rr.log.With(zap.String("func", "GetLatestOrders"))
 	if reqID != "" {
 		logger = logger.With(zap.String("request_id", reqID))
 	}
 
-	rows, err := rr.pg.Pool.Query(ctx, selectOrderQuery, orderUID)
+	rows, err := rr.pg.Pool.Query(ctx, selectLatestOrders, limit)
 	if err != nil {
 		logger.Error("query failed", zap.Error(err))
 		return nil, entity.ErrorQueryFailed
 	}
 	defer rows.Close()
 
-	var (
-		order *entity.OrderInfo
-		seen  bool
-	)
+	orders := make(map[string]*entity.OrderInfo, limit)
+	orderSeq := make([]string, 0, limit)
 
 	for rows.Next() {
 		var (
@@ -83,8 +78,9 @@ func (rr *RatingRepository) GetOrderByUID(ctx context.Context, orderUID string) 
 			return nil, entity.ErrorQueryFailed
 		}
 
-		if !seen {
-			order = &entity.OrderInfo{
+		ord := orders[ordUID]
+		if ord == nil {
+			ord = &entity.OrderInfo{
 				OrderUID:          ordUID,
 				TrackNumber:       trackNumber,
 				Entry:             entry,
@@ -97,8 +93,7 @@ func (rr *RatingRepository) GetOrderByUID(ctx context.Context, orderUID string) 
 				DateCreated:       dateCreated.UTC(),
 				OofShard:          oofShard,
 			}
-			// delivery
-			order.Delivery = entity.DeliveryInfo{
+			ord.Delivery = entity.DeliveryInfo{
 				Name:    dName.String,
 				Phone:   dPhone.String,
 				Zip:     dZip.String,
@@ -107,8 +102,7 @@ func (rr *RatingRepository) GetOrderByUID(ctx context.Context, orderUID string) 
 				Region:  dRegion.String,
 				Email:   dEmail.String,
 			}
-			// payment
-			order.Payment = entity.PaymentInfo{
+			ord.Payment = entity.PaymentInfo{
 				Transaction:  pTrans.String,
 				RequestID:    pReqID.String,
 				Currency:     pCurr.String,
@@ -120,36 +114,36 @@ func (rr *RatingRepository) GetOrderByUID(ctx context.Context, orderUID string) 
 				CustomFee:    pCustomFee.Int64,
 				PaymentDT:    pPaidDt.Int64,
 			}
-			order.Items = make([]entity.ItemInfo, 0, 1)
-			seen = true
+			ord.Items = make([]entity.ItemInfo, 0, 2) 
+			orders[ordUID] = ord
+			orderSeq = append(orderSeq, ordUID)
 		}
 
-		if !chrtID.Valid {
-			continue
+		if chrtID.Valid {
+			ord.Items = append(ord.Items, entity.ItemInfo{
+				ChrtID:      chrtID.Int64,
+				TrackNumber: itemTrack.String,
+				Price:       price.Int64,
+				Rid:         rid.String,
+				Name:        itemName.String,
+				Sale:        sale.Int64,
+				Size:        size.String,
+				TotalPrice:  totalPrice.Int64,
+				NmID:        nmID.Int64,
+				Brand:       brand.String,
+				Status:      status.Int64,
+			})
 		}
-		order.Items = append(order.Items, entity.ItemInfo{
-			ChrtID:      chrtID.Int64,
-			TrackNumber: itemTrack.String,
-			Price:       price.Int64,
-			Rid:         rid.String,
-			Name:        itemName.String,
-			Sale:        sale.Int64,
-			Size:        size.String,
-			TotalPrice:  totalPrice.Int64,
-			NmID:        nmID.Int64,
-			Brand:       brand.String,
-			Status:      status.Int64,
-		})
 	}
 	if err := rows.Err(); err != nil {
 		logger.Error("rows error", zap.Error(err))
 		return nil, entity.ErrorQueryFailed
 	}
-	if !seen {
-		logger.Info("order not found", zap.String("order_uid", orderUID))
-		return nil, entity.ErrorOrderNotFound
-	}
 
-	logger.Info("The request was completed successfully", zap.String("order_uid", orderUID))
-	return order, nil
+	// сохранить порядок сортировки
+	out := make([]*entity.OrderInfo, 0, len(orderSeq))
+	for _, id := range orderSeq {
+		out = append(out, orders[id])
+	}
+	return out, nil
 }

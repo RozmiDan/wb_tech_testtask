@@ -52,12 +52,13 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 				}
 				http.Error(w, errDTO.Message, http.StatusGatewayTimeout)
 				return
-
-				// case errors.Is(err, entity.ErrOrderNotFound):
-				// 	logger.Info("order not found", zap.String("order_uid", orderUID))
-				// 	render.Status(r, http.StatusNotFound)
-				// 	render.JSON(w, r, APIError{"not_found", "game not found"})
-				// 	return
+			case errors.Is(err, entity.ErrorOrderNotFound):
+				logger.Info("order not found", zap.String("order_uid", orderUID))
+				errDTO := APIError{
+					Message: "order not found",
+				}
+				http.Error(w, errDTO.Message, http.StatusNotFound)
+				return
 			}
 			logger.Error("failed to get order", zap.Error(err))
 			errDTO := APIError{

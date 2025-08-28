@@ -39,6 +39,9 @@ func (u *UsecaseLayer) AddOrderInfo(ctx context.Context, order *entity.OrderInfo
 			return entity.ErrInternal
 		}
 	}
+	// 5) пишем в кэш 
+	u.cache.Put(order.OrderUID, mapOrderToResponse(order))
+
 	logger.Info("succsessfuly add order", zap.String("order_uid", order.OrderUID))
 	return nil
 }

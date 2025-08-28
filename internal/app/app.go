@@ -11,8 +11,10 @@ import (
 	"github.com/RozmiDan/wb_tech_testtask/db"
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/server"
+	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"github.com/RozmiDan/wb_tech_testtask/internal/repo/postgre"
 	"github.com/RozmiDan/wb_tech_testtask/internal/usecase"
+	lru_cache "github.com/RozmiDan/wb_tech_testtask/pkg/cache"
 	"github.com/RozmiDan/wb_tech_testtask/pkg/logger"
 	"github.com/RozmiDan/wb_tech_testtask/pkg/postgres"
 	"go.uber.org/zap"
@@ -34,10 +36,22 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 	// repo
 	repo := postgre.New(pg, logger)
+	// cache
+	cache := lru_cache.NewLruCache[string, *entity.OrderResponse](cfg.CacheCap, nil)
+
 	// Kafka
 
 	// usecase
-	uc := usecase.New(logger, repo)
+	uc := usecase.New(logger, repo, cache)
+
+	// прогрев кэша
+	warmCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := uc.WarmCacheLatest(warmCtx, cfg.CacheCap); err != nil {
+		logger.Warn("cache warm failed", zap.Error(err))
+	} else {
+		logger.Warn("cache warm success")
+	}
 
 	// server
 	server := server.InitServer(cfg, logger, uc)

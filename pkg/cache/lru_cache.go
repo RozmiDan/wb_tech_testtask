@@ -1,6 +1,8 @@
 package lru_cache
 
 import (
+	"sync"
+
 	"iter"
 
 	"github.com/RozmiDan/wb_tech_testtask/pkg/cache/linklist"
@@ -23,9 +25,13 @@ type LruCache[K comparable, V any] struct {
 	mp           map[K]*linklist.Node[Node[K, V]]
 	defaultValue V
 	capacity     int
+	mu           sync.RWMutex
 }
 
 func NewLruCache[K comparable, V any](cap int, defVal V) *LruCache[K, V] {
+	if cap <= 0 {
+		panic("lru: capacity must be > 0")
+	}
 	return &LruCache[K, V]{
 		list:         linklist.NewList[Node[K, V]](),
 		mp:           make(map[K]*linklist.Node[Node[K, V]], cap),
@@ -36,6 +42,8 @@ func NewLruCache[K comparable, V any](cap int, defVal V) *LruCache[K, V] {
 
 func (lru *LruCache[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
+		lru.mu.RLock()
+		defer lru.mu.RUnlock()
 		for it := range lru.list.All() {
 			if !yield(it.key, it.value) {
 				return
@@ -45,31 +53,40 @@ func (lru *LruCache[K, V]) All() iter.Seq2[K, V] {
 }
 
 func (lru *LruCache[K, V]) Put(key K, val V) {
-	if v, ok := lru.mp[key]; ok {
-		lru.list.PutNewValue(v, Node[K, V]{key, val})
-		lru.list.MoveToFront(v)
+	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
+	if n, ok := lru.mp[key]; ok {
+		lru.list.PutNewValue(n, Node[K, V]{key: key, value: val})
+		lru.list.MoveToFront(n)
 		return
 	}
 
-	if lru.capacity <= lru.list.Size() {
-		lru.list.PutNewValue(lru.list.Back(), Node[K, V]{key, val})
-		lru.list.MoveToFront(lru.list.Back())
-		lru.mp[key] = lru.list.Front()
-		return
+	if lru.list.Size() >= lru.capacity {
+		tail := lru.list.Back()
+		if tail != nil {
+			evicted := lru.list.Remove(tail)
+			delete(lru.mp, evicted.key)
+		}
 	}
 
-	lru.list.PushFront(Node[K, V]{key, val})
+	lru.list.PushFront(Node[K, V]{key: key, value: val})
 	lru.mp[key] = lru.list.Front()
 }
 
 func (lru *LruCache[K, V]) Get(key K) V {
-	if v, ok := lru.mp[key]; ok {
-		lru.list.MoveToFront(v)
-		return v.GetData().value
+	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
+	if n, ok := lru.mp[key]; ok {
+		lru.list.MoveToFront(n)
+		return n.GetData().value
 	}
 	return lru.defaultValue
 }
 
 func (lru *LruCache[K, V]) Size() int {
+	lru.mu.RLock()
+	defer lru.mu.RUnlock()
 	return lru.list.Size()
 }
