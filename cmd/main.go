@@ -1,3 +1,8 @@
+// @title           WB Orders Demo API
+// @version         1.0
+// @description     Демонстрационный сервис: получение информации о заказе.
+// @BasePath        /
+// @schemes         http
 package main
 
 import (

@@ -35,6 +35,8 @@ type OrderInfo struct {
 	OofShard          string       `json:"oof_shard"`
 }
 
+// validated
+
 type DeliveryInfo struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`

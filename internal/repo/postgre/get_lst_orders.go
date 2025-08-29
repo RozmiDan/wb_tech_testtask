@@ -10,6 +10,12 @@ import (
 )
 
 const selectLatestOrders = `
+	WITH latest AS (
+		SELECT o.order_uid
+		FROM orders o
+		ORDER BY o.created_at DESC, o.order_uid DESC
+		LIMIT $1
+	)
 	SELECT
 		o.order_uid, o.track_number, o.entry, o.locale, o.internal_signature,
 		o.customer_id, o.delivery_service, o.shardkey, o.sm_id, o.date_created, o.oof_shard,
@@ -18,12 +24,12 @@ const selectLatestOrders = `
 		p.payment_dt, p.bank, p.delivery_cost, p.goods_total, p.custom_fee,
 		i.chrt_id, i.track_number AS item_track, i.price, i.rid, i.name AS item_name,
 		i.sale, i.size, i.total_price, i.nm_id, i.brand, i.status
-	FROM orders o
+	FROM latest l
+	JOIN orders     o ON o.order_uid = l.order_uid
 	LEFT JOIN deliveries d ON d.order_uid = o.order_uid
 	LEFT JOIN payments   p ON p.order_uid = o.order_uid
 	LEFT JOIN items      i ON i.order_uid = o.order_uid
-	ORDER BY o.created_at DESC
-	LIMIT $1;
+	ORDER BY o.created_at DESC, o.order_uid DESC, i.chrt_id;
 `
 
 func (rr *RatingRepository) GetLatestOrders(ctx context.Context, limit int) ([]*entity.OrderInfo, error) {
@@ -114,7 +120,7 @@ func (rr *RatingRepository) GetLatestOrders(ctx context.Context, limit int) ([]*
 				CustomFee:    pCustomFee.Int64,
 				PaymentDT:    pPaidDt.Int64,
 			}
-			ord.Items = make([]entity.ItemInfo, 0, 2) 
+			ord.Items = make([]entity.ItemInfo, 0, 2)
 			orders[ordUID] = ord
 			orderSeq = append(orderSeq, ordUID)
 		}

@@ -1,0 +1,178 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Демонстрационный сервис: получение информации о заказе.",
+        "title": "WB Orders Demo API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/order/{order_uid}": {
+            "get": {
+                "description": "Возвращает информацию о заказе по order_uid.",
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Get order by UID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order UID",
+                        "name": "order_uid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.OrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid order_uid",
+                        "schema": {
+                            "$ref": "#/definitions/mainhandler.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "order not found",
+                        "schema": {
+                            "$ref": "#/definitions/mainhandler.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "unexpected internal error",
+                        "schema": {
+                            "$ref": "#/definitions/mainhandler.APIError"
+                        }
+                    },
+                    "504": {
+                        "description": "timeout exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/mainhandler.APIError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "entity.DeliveryPublic": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.ItemPublic": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "total_price": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.LogisticsInfo": {
+            "type": "object",
+            "properties": {
+                "delivery_service": {
+                    "type": "string"
+                },
+                "track_number": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.OrderResponse": {
+            "type": "object",
+            "properties": {
+                "date_created": {
+                    "type": "string"
+                },
+                "delivery": {
+                    "$ref": "#/definitions/entity.DeliveryPublic"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.ItemPublic"
+                    }
+                },
+                "locale": {
+                    "type": "string"
+                },
+                "logistics": {
+                    "$ref": "#/definitions/entity.LogisticsInfo"
+                },
+                "order_uid": {
+                    "type": "string"
+                },
+                "payment": {
+                    "$ref": "#/definitions/entity.PaymentPublic"
+                }
+            }
+        },
+        "entity.PaymentPublic": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "delivery_cost": {
+                    "type": "integer"
+                },
+                "goods_total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "mainhandler.APIError": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

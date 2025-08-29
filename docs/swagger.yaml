@@ -1,0 +1,116 @@
+basePath: /
+definitions:
+  entity.DeliveryPublic:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      region:
+        type: string
+    type: object
+  entity.ItemPublic:
+    properties:
+      brand:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      size:
+        type: string
+      status:
+        type: integer
+      total_price:
+        type: integer
+    type: object
+  entity.LogisticsInfo:
+    properties:
+      delivery_service:
+        type: string
+      track_number:
+        type: string
+    type: object
+  entity.OrderResponse:
+    properties:
+      date_created:
+        type: string
+      delivery:
+        $ref: '#/definitions/entity.DeliveryPublic'
+      items:
+        items:
+          $ref: '#/definitions/entity.ItemPublic'
+        type: array
+      locale:
+        type: string
+      logistics:
+        $ref: '#/definitions/entity.LogisticsInfo'
+      order_uid:
+        type: string
+      payment:
+        $ref: '#/definitions/entity.PaymentPublic'
+    type: object
+  entity.PaymentPublic:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      delivery_cost:
+        type: integer
+      goods_total:
+        type: integer
+    type: object
+  mainhandler.APIError:
+    properties:
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: 'Демонстрационный сервис: получение информации о заказе.'
+  title: WB Orders Demo API
+  version: "1.0"
+paths:
+  /order/{order_uid}:
+    get:
+      description: Возвращает информацию о заказе по order_uid.
+      parameters:
+      - description: Order UID
+        in: path
+        name: order_uid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.OrderResponse'
+        "400":
+          description: invalid order_uid
+          schema:
+            $ref: '#/definitions/mainhandler.APIError'
+        "404":
+          description: order not found
+          schema:
+            $ref: '#/definitions/mainhandler.APIError'
+        "500":
+          description: unexpected internal error
+          schema:
+            $ref: '#/definitions/mainhandler.APIError'
+        "504":
+          description: timeout exceeded
+          schema:
+            $ref: '#/definitions/mainhandler.APIError'
+      summary: Get order by UID
+      tags:
+      - orders
+schemes:
+- http
+swagger: "2.0"

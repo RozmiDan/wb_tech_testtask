@@ -18,6 +18,17 @@ type OrderInfoGetter interface {
 	GetOrderInfo(ctx context.Context, orderUID string) (*entity.OrderResponse, error)
 }
 
+// Get Order by UID
+// @Summary      Get order by UID
+// @Description  Возвращает информацию о заказе по order_uid.
+// @Tags         orders
+// @Param        order_uid   path      string  true  "Order UID"
+// @Success      200  {object}  entity.OrderResponse
+// @Failure      400  {object}  APIError  "invalid order_uid"
+// @Failure      404  {object}  APIError  "order not found"
+// @Failure      504  {object}  APIError  "timeout exceeded"
+// @Failure      500  {object}  APIError  "unexpected internal error"
+// @Router       /order/{order_uid} [get]
 func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 	baselog := log.With(zap.String("handler", "MainHandler"))
 
@@ -89,10 +100,3 @@ func uidParser(uid string) error {
 	return errors.New("order_uid is not a valid UID")
 }
 
-// func writeJSON(w http.ResponseWriter, code int, v any) {
-// 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-// 	w.WriteHeader(code)
-// 	enc := json.NewEncoder(w)
-// 	enc.SetEscapeHTML(true)
-// 	_ = enc.Encode(v)
-// }

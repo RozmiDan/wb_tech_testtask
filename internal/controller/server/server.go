@@ -4,14 +4,17 @@ import (
 	"context"
 	"net/http"
 
+	_ "github.com/RozmiDan/wb_tech_testtask/docs"
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/drophandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/mainhandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/handlers/pinghandler"
 	custommiddleware "github.com/RozmiDan/wb_tech_testtask/internal/controller/middleware"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/webui"
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -31,8 +34,12 @@ func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server
 	// router.Use(custommiddleware.PrometheusMiddleware)
 	router.Use(custommiddleware.CustomLogger(baseLog, cfg.HTTPTimeout))
 
-	// router.Get("/swagger/*", httpSwagger.WrapHandler)
+	router.Get("/swagger/*", httpSwagger.WrapHandler)
 	// router.Handle("/metrics", promhttp.Handler())
+
+	// static UI
+	router.Get("/", webui.Index())
+	router.Handle("/static/*", webui.Static())
 
 	// GET http://localhost:8081/order/<order_uid>
 	router.Get("/order/{order_uid}", mainhandler.New(baseLog, uc))

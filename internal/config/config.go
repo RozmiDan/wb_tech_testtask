@@ -41,5 +41,6 @@ func MustLoad() *Config {
 	if err := env.Parse(cfg); err != nil {
 		log.Fatalf("Cant load configuration: %v", err)
 	}
+
 	return cfg
 }

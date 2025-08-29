@@ -24,9 +24,11 @@ func Run(cfg *config.Config) {
 	// New logger
 	logger := logger.NewLogger(cfg.Env, cfg.LogsPath)
 	logger.Info("Starting programm")
+
 	// Migrations
 	db.SetupPostgres(cfg, logger)
 	logger.Info("Migrations completed successfully\n")
+
 	// Db connection
 	pg, err := postgres.New(cfg.PostgresURL, postgres.MaxPoolSize(5))
 	if err != nil {
@@ -34,8 +36,10 @@ func Run(cfg *config.Config) {
 		os.Exit(1)
 	}
 	defer pg.Close()
+
 	// repo
 	repo := postgre.New(pg, logger)
+	
 	// cache
 	cache := lru_cache.NewLruCache[string, *entity.OrderResponse](cfg.CacheCap, nil)
 

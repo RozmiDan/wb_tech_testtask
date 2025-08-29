@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WB Orders — Demo</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    .container { max-width: 860px; margin: 0 auto; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    input { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; }
+    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; }
+    button.primary { background: #6b46c1; color: #fff; }
+    .muted { color: #666; font-size: 14px; }
+    .error { color: #b00020; margin-top: 8px; }
+    .card { margin-top: 16px; padding: 16px; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .table th, .table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    .loading { opacity: .7; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Order Lookup</h1>
+    <p class="muted">Введите <span class="mono">order_uid</span> и нажмите «Найти».</p>
+    <div class="row" id="formRow">
+      <input id="uid" placeholder="например: b563feb7b2b84b6test" />
+      <button id="btn" class="primary">Найти</button>
+    </div>
+    <div id="msg" class="error"></div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const uidEl = document.getElementById('uid');
+    const btnEl = document.getElementById('btn');
+    const msgEl = document.getElementById('msg');
+    const resultEl = document.getElementById('result');
+    const formRow = document.getElementById('formRow');
+
+    function setLoading(on) {
+      if (on) formRow.classList.add('loading'); else formRow.classList.remove('loading');
+      btnEl.disabled = on;
+    }
+
+    function renderOrder(o) {
+      const itemsRows = (o.items || []).map(it => `
+        <tr>
+          <td>${it.name}</td>
+          <td>${it.brand}</td>
+          <td>${it.size}</td>
+          <td>${it.price}</td>
+          <td>${it.total_price}</td>
+          <td>${it.status}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="card">
+          <div class="grid">
+            <div>
+              <h3>Заказ</h3>
+              <div><b>order_uid:</b> <span class="mono">${o.order_uid}</span></div>
+              <div><b>date_created:</b> ${o.date_created}</div>
+              <div><b>locale:</b> ${o.locale}</div>
+            </div>
+            <div>
+              <h3>Логистика</h3>
+              <div><b>track_number:</b> ${o.logistics?.track_number ?? ''}</div>
+              <div><b>delivery_service:</b> ${o.logistics?.delivery_service ?? ''}</div>
+            </div>
+          </div>
+
+          <div class="grid" style="margin-top:12px;">
+            <div>
+              <h3>Доставка</h3>
+              <div>${o.delivery?.name ?? ''}</div>
+              <div>${o.delivery?.address ?? ''}</div>
+              <div>${o.delivery?.city ?? ''}, ${o.delivery?.region ?? ''}</div>
+              <div>${o.delivery?.phone ?? ''}</div>
+              <div>${o.delivery?.email ?? ''}</div>
+            </div>
+            <div>
+              <h3>Оплата</h3>
+              <div><b>amount:</b> ${o.payment?.amount ?? ''} ${o.payment?.currency ?? ''}</div>
+              <div><b>delivery_cost:</b> ${o.payment?.delivery_cost ?? ''}</div>
+              <div><b>goods_total:</b> ${o.payment?.goods_total ?? ''}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <h3>Товары</h3>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>name</th><th>brand</th><th>size</th><th>price</th><th>total</th><th>status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows || '<tr><td colspan="6" class="muted">нет позиций</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function onSearch() {
+      msgEl.textContent = '';
+      resultEl.innerHTML = '';
+      const uid = (uidEl.value || '').trim();
+      if (!uid) {
+        msgEl.textContent = 'Введите order_uid';
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(`/order/${encodeURIComponent(uid)}`, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+
+        resultEl.innerHTML = renderOrder(data);
+      } catch (e) {
+        msgEl.textContent = e.message || 'Ошибка запроса';
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    btnEl.addEventListener('click', onSearch);
+    uidEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') onSearch();
+    });
+  </script>
+</body>
+</html>
