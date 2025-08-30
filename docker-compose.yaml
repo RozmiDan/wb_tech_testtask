@@ -13,8 +13,12 @@ services:
       - .env
     restart: always
     depends_on:
-        # condition: service_healthy
-      - postgres
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     healthcheck:
       # test: ["CMD", "curl", "-f", "http://localhost:8080/ping"]
       interval: 5s
@@ -43,6 +47,77 @@ services:
       retries: 5
     networks:
       - internal
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.1
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - internal
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.1
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID:                         1
+      KAFKA_ZOOKEEPER_CONNECT:                zookeeper:2181
+      KAFKA_LISTENERS:                        PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS:             PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 5s
+      retries: 10
+    networks:
+      - internal
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks: [internal]
+    restart: "no"
+    command:
+      - kafka-topics
+      - --bootstrap-server
+      - kafka:9092
+      - --create
+      - --if-not-exists
+      - --topic
+      - orders
+      - --partitions
+      - "1"
+      - --replication-factor
+      - "1"
+
+  producer-dir:
+    build:
+      context: .
+      dockerfile: build/producer-dir/Dockerfile
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    networks: [internal]
+    volumes:
+      - ./producer_samples:/data:ro
+    entrypoint: ["/producer-dir",
+      "-brokers","kafka:9092",
+      "-topic","orders",
+      "-dir","/data",
+      "-min","5s",
+      "-max","5s",
+      "-retries","5",
+      "-timeout","5s",
+      "-shuffle","true",
+      "-repeat","false"
+    ]
 
 volumes:
   postgres_data:

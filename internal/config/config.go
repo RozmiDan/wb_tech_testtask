@@ -24,19 +24,20 @@ type Config struct {
 	PostgresPoolMax int    `env:"POSTGRES_POOL_MAX" envDefault:"5"`
 
 	CacheCap int `env:"CACHE_CAPACITY" envDefault:"10"`
-	// Kafka
-	// KafkaBrokers []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	// KafkaTopic   string        `env:"KAFKA_TOPIC"`
-	// KafkaTimeout time.Duration `env:"KAFKA_TIMEOUT" envDefault:"5s"`
+
+	KafkaBrokers     []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	KafkaTopic       string        `env:"KAFKA_TOPIC" envDefault:"orders"`
+	KafkaGroupID     string        `env:"KAFKA_GROUP_ID" envDefault:"wb_orders_consumer"`
+	KafkaMinBytes    int           `env:"KAFKA_MIN_BYTES" envDefault:"1"`
+	KafkaMaxBytes    int           `env:"KAFKA_MAX_BYTES" envDefault:"10485760"`
+	KafkaMaxWait     time.Duration `env:"KAFKA_MAX_WAIT" envDefault:"1s"`
+	KafkaReadTimeout time.Duration `env:"KAFKA_READ_TIMEOUT" envDefault:"5s"`
+	KafkaDialTimeout time.Duration `env:"KAFKA_DIAL_TIMEOUT" envDefault:"5s"`
+	KafkaMsgTimeout  time.Duration `env:"KAFKA_MSG_TIMEOUT" envDefault:"3s"`
 }
 
 func MustLoad() *Config {
 	var cfg *Config = &Config{}
-
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
-	// }
 
 	if err := env.Parse(cfg); err != nil {
 		log.Fatalf("Cant load configuration: %v", err)

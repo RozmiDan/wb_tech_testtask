@@ -1,9 +1,9 @@
 {
-   "order_uid": "b563feb7b2b84b6test",
-   "track_number": "WBILMTESTTRACK",
-   "entry": "WBIL",
+   "order_uid": "b562feb7b2b84b6test6",
+   "track_number": "WBILMTESTTRACC",
+   "entry": "WBIF",
    "delivery": {
-      "name": "Test Testov",
+      "name": "Tibada Fasov",
       "phone": "+9720000000",
       "zip": "2639809",
       "city": "Kiryat Mozkin",
@@ -12,23 +12,23 @@
       "email": "test@gmail.com"
    },
    "payment": {
-      "transaction": "b563feb7b2b84b6test",
-      "request_id": "",
-      "currency": "USD",
+      "transaction": "b562feb7b2b84b6test6",
+      "request_id": "dfdsdfsd",
+      "currency": "RUB",
       "provider": "wbpay",
-      "amount": 1817,
-      "payment_dt": 1637907727,
-      "bank": "alpha",
+      "amount": 54322,
+      "payment_dt": 234332332,
+      "bank": "tbank",
       "delivery_cost": 1500,
       "goods_total": 317,
       "custom_fee": 0
    },
    "items": [
       {
-         "chrt_id": 9934930,
-         "track_number": "WBILMTESTTRACK",
-         "price": 453,
-         "rid": "ab4219087a764ae0btest",
+         "chrt_id": 9934933,
+         "track_number": "sdfsddsfv",
+         "price": 33453,
+         "rid": "ab4219087a164ae0btest",
          "name": "Mascaras",
          "sale": 30,
          "size": "0",
@@ -38,7 +38,7 @@
          "status": 202
       }
    ],
-   "locale": "en",
+   "locale": "ru",
    "internal_signature": "",
    "customer_id": "test",
    "delivery_service": "meest",

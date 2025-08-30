@@ -10,7 +10,8 @@ import (
 
 	"github.com/RozmiDan/wb_tech_testtask/db"
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
-	"github.com/RozmiDan/wb_tech_testtask/internal/controller/server"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/server"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/kafka"
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
 	"github.com/RozmiDan/wb_tech_testtask/internal/repo/postgre"
 	"github.com/RozmiDan/wb_tech_testtask/internal/usecase"
@@ -37,25 +38,34 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
 	// repo
 	repo := postgre.New(pg, logger)
-	
+
 	// cache
 	cache := lru_cache.NewLruCache[string, *entity.OrderResponse](cfg.CacheCap, nil)
-
-	// Kafka
 
 	// usecase
 	uc := usecase.New(logger, repo, cache)
 
+	// Kafka
+	kafkaConsumer := kafka.NewConsumer(cfg, uc, logger)
+
+	go func() {
+		kafkaConsumer.Start(rootCtx, cfg)
+		logger.Info("kafka consumer stopped")
+	}()
+
 	// прогрев кэша
-	warmCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	warmCtx, cancel := context.WithTimeout(rootCtx, 2*time.Second)
 	if err := uc.WarmCacheLatest(warmCtx, cfg.CacheCap); err != nil {
 		logger.Warn("cache warm failed", zap.Error(err))
 	} else {
 		logger.Warn("cache warm success")
 	}
+	cancel()
 
 	// server
 	server := server.InitServer(cfg, logger, uc)
@@ -74,8 +84,11 @@ func Run(cfg *config.Config) {
 	<-stop
 	logger.Info("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.HTTPTimeout*time.Second)
-	defer cancel()
+	rootCancel()
+	_ = kafkaConsumer.Close()
+
+	ctx, cancel2 := context.WithTimeout(context.Background(), cfg.HTTPTimeout*time.Second)
+	defer cancel2()
 
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("Server shutdown error", zap.Error(err))
