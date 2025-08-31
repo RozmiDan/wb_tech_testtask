@@ -1,4 +1,4 @@
-package pinghandler
+package addhandler
 
 import (
 	"context"

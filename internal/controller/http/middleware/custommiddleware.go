@@ -23,7 +23,6 @@ func CustomLogger(log *zap.Logger, httpTimeout time.Duration) func(next http.Han
 				zap.String("remote_addr", r.RemoteAddr),
 				zap.String("request_id", reqID),
 			)
-			// ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			ctx := context.WithValue(r.Context(), entity.RequestIDKey{}, reqID)
 			ctx, cancel := context.WithTimeout(ctx, httpTimeout)
 			t1 := time.Now()

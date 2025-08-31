@@ -1,0 +1,48 @@
+# Бинарные файлы
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# Данные и конфигурация
+*.env
+*.yaml
+*.yml
+configs/
+secrets/
+.env
+*.conf
+result/
+
+# Файлы IDE и редакторов
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+.DS_Store
+
+# Go-кэш и пакеты
+vendor/
+Godeps/
+Godeps/
+
+# Кеш тестов и покрытия
+coverage.out
+cover.out
+
+# Отчёты и профайлинг
+*.out
+coverage/
+
+# Логи и временные файлы
+*.log
+tmp/
+
+# Прочее
+*.db
+*.sqlite
+
+!docker-compose.yaml
+!ci.yml

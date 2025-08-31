@@ -6,9 +6,9 @@ import (
 
 	_ "github.com/RozmiDan/wb_tech_testtask/docs"
 	"github.com/RozmiDan/wb_tech_testtask/internal/config"
+	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/handlers/addhandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/handlers/drophandler"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/handlers/mainhandler"
-	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/handlers/pinghandler"
 	custommiddleware "github.com/RozmiDan/wb_tech_testtask/internal/controller/http/middleware"
 	"github.com/RozmiDan/wb_tech_testtask/internal/controller/http/webui"
 	"github.com/RozmiDan/wb_tech_testtask/internal/entity"
@@ -44,7 +44,7 @@ func InitServer(cfg *config.Config, logger *zap.Logger, uc UseCase) *http.Server
 	// GET http://localhost:8081/order/<order_uid>
 	router.Get("/order/{order_uid}", mainhandler.New(baseLog, uc))
 	router.Get("/service/drop", drophandler.New(baseLog))
-	router.Post("/order/{order_uid}", pinghandler.New(baseLog, uc))
+	router.Post("/order/{order_uid}", addhandler.New(baseLog, uc))
 
 	server := &http.Server{
 		Addr:         cfg.HTTPPort,
