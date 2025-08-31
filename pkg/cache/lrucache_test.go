@@ -121,7 +121,7 @@ func TestConcurrentPutGet(t *testing.T) {
 	capacity := 128
 	c := NewLruCache[int, int](capacity, -1)
 
-	nG := runtime.GOMAXPROCS(0) * 4 
+	nG := runtime.GOMAXPROCS(0) * 4
 	var wg sync.WaitGroup
 	wg.Add(nG)
 
@@ -138,7 +138,7 @@ func TestConcurrentPutGet(t *testing.T) {
 				} else {
 					_ = c.Get(k)
 				}
-				
+
 				if i%2000 == 0 {
 					time.Sleep(time.Microsecond)
 				}

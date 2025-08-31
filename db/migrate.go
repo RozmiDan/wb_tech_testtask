@@ -40,4 +40,3 @@ func SetupPostgres(cfg *config.Config, logger *zap.Logger) {
 		os.Exit(1)
 	}
 }
-

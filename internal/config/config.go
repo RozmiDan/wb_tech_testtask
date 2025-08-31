@@ -1,3 +1,4 @@
+// Package config предоставляет структуру и загрузку конфигурации из переменных окружения.
 package config
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
+// Config содержит все параметры конфигурации, загружаемые из переменных окружения.
 type Config struct {
 	Env             string        `env:"ENV" envDefault:"dev"`
 	LogsPath        string        `env:"LOGS_PATH"`
@@ -36,8 +38,9 @@ type Config struct {
 	KafkaMsgTimeout  time.Duration `env:"KAFKA_MSG_TIMEOUT" envDefault:"3s"`
 }
 
+// MustLoad парсит переменные окружения и возвращает конфигурацию или завершает выполнение при ошибке.
 func MustLoad() *Config {
-	var cfg *Config = &Config{}
+	cfg := &Config{}
 
 	if err := env.Parse(cfg); err != nil {
 		log.Fatalf("Cant load configuration: %v", err)

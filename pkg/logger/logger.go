@@ -22,7 +22,9 @@ func NewLogger(env string, logPath string) *zap.Logger {
 		fmt.Fprintf(os.Stderr, "cannot open log file %q: %v\n", logPath, err)
 		os.Exit(1)
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		fmt.Println("failed to close file:", err)
+	}
 
 	switch env {
 	case "local":
@@ -36,7 +38,7 @@ func NewLogger(env string, logPath string) *zap.Logger {
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	cfg.OutputPaths = []string{"stdout", logPath}
-	//cfg.OutputPaths = []string{logPath}
+	// cfg.OutputPaths = []string{logPath}
 
 	logger, err := cfg.Build()
 	if err != nil {

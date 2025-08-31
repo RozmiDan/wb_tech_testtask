@@ -51,7 +51,11 @@ func main() {
 		AllowAutoTopicCreation: false,
 		BatchTimeout:           50 * time.Millisecond,
 	}
-	defer w.Close()
+	defer func() {
+		if err := w.Close(); err != nil {
+			fmt.Println("failed to close", err)
+		}
+	}()
 
 	runOnce := func() {
 		list := append([]string(nil), files...)

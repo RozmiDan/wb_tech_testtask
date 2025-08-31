@@ -18,11 +18,13 @@ func (u *UsecaseLayer) WarmCacheLatest(ctx context.Context, cacheCap int) error 
 	}
 	if cacheCap <= 0 {
 		logger.Error("invalid cache capacity")
+
 		return errors.New("invalid cache capacity value")
 	}
 	orders, err := u.db.GetLatestOrders(ctx, cacheCap)
 	if err != nil {
 		logger.Error("Cant find values", zap.Int("count", len(orders)))
+
 		return err
 	}
 	for _, o := range orders {

@@ -1,4 +1,4 @@
-.PHONY: run-app db-up db-down integration-up integration-down integration-test run-test
+.PHONY: run-app db-up db-down integration-up integration-down integration-test run-test lint
 
 include .env
 export
@@ -37,4 +37,7 @@ run-test: integration-up
 	go test -v ./...
 	sleep 1
 	make integration-down
+
+lint:
+	golangci-lint run ./...
 

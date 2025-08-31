@@ -59,6 +59,7 @@ func (lru *LruCache[K, V]) Put(key K, val V) {
 	if n, ok := lru.mp[key]; ok {
 		lru.list.PutNewValue(n, Node[K, V]{key: key, value: val})
 		lru.list.MoveToFront(n)
+
 		return
 	}
 

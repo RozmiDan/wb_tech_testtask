@@ -65,7 +65,7 @@ func (c *Consumer) Start(ctx context.Context, cfg *config.Config) {
 				zap.Int64("offset", msg.Offset),
 				zap.Error(err),
 			)
-			c.reader.CommitMessages(ctx, msg)
+			_ = c.reader.CommitMessages(ctx, msg)
 			cancel()
 			continue
 		}

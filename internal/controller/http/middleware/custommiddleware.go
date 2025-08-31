@@ -17,15 +17,18 @@ func CustomLogger(log *zap.Logger, httpTimeout time.Duration) func(next http.Han
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			reqID := middleware.GetReqID(r.Context())
+
 			curLog := baselog.With(
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 				zap.String("remote_addr", r.RemoteAddr),
 				zap.String("request_id", reqID),
 			)
+
 			ctx := context.WithValue(r.Context(), entity.RequestIDKey{}, reqID)
 			ctx, cancel := context.WithTimeout(ctx, httpTimeout)
 			t1 := time.Now()
+
 			defer func() {
 				curLog.Info("request completed",
 					// zap.Int("status", ww.Status()),

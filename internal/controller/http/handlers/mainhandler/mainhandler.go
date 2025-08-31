@@ -36,6 +36,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 		// 1) забираем request_id
 		ctx := r.Context()
 		logger := baselog
+
 		// 2) оборачиваем логгер
 		if reqID, ok := ctx.Value(entity.RequestIDKey{}).(string); ok && reqID != "" {
 			logger = logger.With(zap.String("request_id", reqID))
@@ -49,6 +50,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 				Message: err.Error(),
 			}
 			http.Error(w, errDTO.Message, http.StatusBadRequest)
+
 			return
 		}
 
@@ -62,6 +64,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 					Message: "request took longer than the timelimit",
 				}
 				http.Error(w, errDTO.Message, http.StatusGatewayTimeout)
+
 				return
 			case errors.Is(err, entity.ErrorOrderNotFound):
 				logger.Info("order not found", zap.String("order_uid", orderUID))
@@ -69,6 +72,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 					Message: "order not found",
 				}
 				http.Error(w, errDTO.Message, http.StatusNotFound)
+
 				return
 			}
 			logger.Error("failed to get order", zap.Error(err))
@@ -76,6 +80,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 				Message: "unexpected internal error",
 			}
 			http.Error(w, errDTO.Message, http.StatusInternalServerError)
+
 			return
 		}
 
@@ -88,6 +93,7 @@ func New(log *zap.Logger, uc OrderInfoGetter) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(b); err != nil {
 			logger.Error("error sending the response")
+
 			return
 		}
 	}
@@ -97,6 +103,6 @@ func uidParser(uid string) error {
 	if len(uid) != 0 && uid == strings.ToLower(uid) {
 		return nil
 	}
+
 	return errors.New("order_uid is not a valid UID")
 }
-

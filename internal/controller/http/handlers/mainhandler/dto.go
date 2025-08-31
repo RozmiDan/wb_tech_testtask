@@ -7,5 +7,5 @@ type GetOrderResponse struct {
 }
 
 type APIError struct {
-	Message string `json:"message"` 
+	Message string `json:"message"`
 }

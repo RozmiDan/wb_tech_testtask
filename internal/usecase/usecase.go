@@ -26,8 +26,8 @@ type UsecaseLayer struct {
 
 func New(logger *zap.Logger, dbLayer RepoLayer, cache OrderCache) *UsecaseLayer {
 	return &UsecaseLayer{
-		log: logger.With(zap.String("layer", "Usecase")),
-		db:  dbLayer,
+		log:   logger.With(zap.String("layer", "Usecase")),
+		db:    dbLayer,
 		cache: cache,
 	}
 }
